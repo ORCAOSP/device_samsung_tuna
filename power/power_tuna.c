@@ -29,7 +29,7 @@
 #define SCREENOFFMAXFREQ_PATH "/sys/devices/system/cpu/cpu0/cpufreq/screen_off_max_freq"
 #define BOOSTPULSE_PATH "/sys/devices/system/cpu/cpufreq/interactive/boostpulse"
 
-#define MAX_BUF_SZ	10
+#define MAX_BUF_SZ  10
 
 /* initialize to something safe */
 static char screen_off_max_freq[MAX_BUF_SZ] = "700000";
@@ -65,19 +65,19 @@ static void sysfs_write(char *path, char *s)
 
 int sysfs_read(const char *path, char *buf, size_t size)
 {
-	int fd, len;
+  int fd, len;
 
-	fd = open(path, O_RDONLY);
-	if (fd < 0)
-		return -1;
+  fd = open(path, O_RDONLY);
+  if (fd < 0)
+    return -1;
 
-	do {
-		len = read(fd, buf, size);
-	} while (len < 0 && errno == EINTR);
+  do {
+    len = read(fd, buf, size);
+  } while (len < 0 && errno == EINTR);
 
-	close(fd);
+  close(fd);
 
-	return len;
+  return len;
 }
 
 static void tuna_power_init(struct power_module *module)
@@ -87,8 +87,16 @@ static void tuna_power_init(struct power_module *module)
      * hispeed 700MHz at load 50%.
      */
 
+    sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/timer_rate",
+                "20000");
+    sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/min_sample_time",
+                "60000");
     sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/hispeed_freq",
-                "920000");
+                "700000");
+    sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/go_hispeed_load",
+                "50");
+    sysfs_write("/sys/devices/system/cpu/cpufreq/interactive/above_hispeed_delay",
+                "100000");
 }
 
 static int boostpulse_open(struct tuna_power_module *tuna)
@@ -116,14 +124,15 @@ static int boostpulse_open(struct tuna_power_module *tuna)
 static void tuna_power_set_interactive(struct power_module *module, int on)
 {
     int len;
+
     char buf[MAX_BUF_SZ];
 
     /*
      * Lower maximum frequency when screen is off.  CPU 0 and 1 share a
      * cpufreq policy.
      */
-    sysfs_write("/sys/devices/system/cpu/cpu0/cpufreq/scaling_max_freq",
-                on ? "1200000" : "700000");
+
+    sysfs_write(SCREENOFFMAXFREQ_PATH,screen_off_max_freq);
 }
 
 static void tuna_power_hint(struct power_module *module, power_hint_t hint,
@@ -132,23 +141,17 @@ static void tuna_power_hint(struct power_module *module, power_hint_t hint,
     struct tuna_power_module *tuna = (struct tuna_power_module *) module;
     char buf[80];
     int len;
-    int duration = 1;
 
     switch (hint) {
     case POWER_HINT_INTERACTION:
-    case POWER_HINT_CPU_BOOST:
-        if (data != NULL)
-            duration = (int) data;
-
         if (boostpulse_open(tuna) >= 0) {
-            snprintf(buf, sizeof(buf), "%d", duration);
-            len = write(tuna->boostpulse_fd, buf, strlen(buf));
+	    len = write(tuna->boostpulse_fd, "1", 1);
 
-            if (len < 0) {
-                strerror_r(errno, buf, sizeof(buf));
-                ALOGE("Error writing to %s: %s\n", BOOSTPULSE_PATH, buf);
-            }
-        }
+	    if (len < 0) {
+	        strerror_r(errno, buf, sizeof(buf));
+		ALOGE("Error writing to %s: %s\n", BOOSTPULSE_PATH, buf);
+	    }
+	}
         break;
 
     case POWER_HINT_VSYNC:

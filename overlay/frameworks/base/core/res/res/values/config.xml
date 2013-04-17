@@ -22,7 +22,7 @@
 <resources>
 
     <!-- Default color for notification LED is white. -->
-    <color name="config_defaultNotificationColor">#ff6eede9</color>
+    <color name="config_defaultNotificationColor">#ffffffff</color>
 
     <!-- Default LED on time for notification LED in milliseconds. -->
     <integer name="config_defaultNotificationLedOn">1000</integer>
@@ -258,7 +258,5 @@
         <!-- empty string to disable, or like: /sys/kernel/fast_charge/force_fast_charge
          it is disabled by default so devices need to add an overlay to enable-->
     <string name="config_fastChargePath" translatable="false">/sys/kernel/fast_charge/force_fast_charge</string>
-
-    <bool name="config_noDelayInATwoDP">true</bool>
 
 </resources>

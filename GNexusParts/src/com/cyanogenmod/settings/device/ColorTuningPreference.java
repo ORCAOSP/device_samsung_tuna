@@ -30,8 +30,8 @@ import android.util.Log;
 import android.widget.Button;
 
 /**
- * Special preference type that allows configuration of Color settings on Nexus
- * Devices
+ * Special preference type that allows configuration of both the ring volume and
+ * notification volume.
  */
 public class ColorTuningPreference extends DialogPreference implements OnClickListener {
 
@@ -58,7 +58,7 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
     private ColorSeekBar mSeekBars[] = new ColorSeekBar[3];
 
     // Align MAX_VALUE with Voodoo Control settings
-    private static final int MAX_VALUE = 2000000000;
+    private static final int MAX_VALUE = Integer.MAX_VALUE - 2;
 
     // Track instances to know when to restore original color
     // (when the orientation changes, a new dialog is created before the old one
@@ -67,7 +67,7 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
 
     public ColorTuningPreference(Context context, AttributeSet attrs) {
         super(context, attrs);
-        
+
         setDialogLayoutResource(R.layout.preference_dialog_color_tuning);
     }
 
@@ -86,12 +86,12 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
     }
 
     private void SetupButtonClickListeners(View view) {
-            Button mButton1 = (Button)view.findViewById(R.id.btnColor1);
-            Button mButton2 = (Button)view.findViewById(R.id.btnColor2);
-            Button mButton3 = (Button)view.findViewById(R.id.btnColor3);
-            mButton1.setOnClickListener(this);
-            mButton2.setOnClickListener(this);
-            mButton3.setOnClickListener(this);
+            Button mDefaultButton = (Button)view.findViewById(R.id.btnColorDefault);
+            Button mCMButton = (Button)view.findViewById(R.id.btnColorCM);
+            Button mDarkButton = (Button)view.findViewById(R.id.btnColorDark);
+            mDefaultButton.setOnClickListener(this);
+            mCMButton.setOnClickListener(this);
+            mDarkButton.setOnClickListener(this);
     }
 
     @Override
@@ -112,36 +112,34 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
     }
 
     /**
-     * Restore color tuning from SharedPreferences. (Write to kernel.)
+     * Restore screen color tuning from SharedPreferences. (Write to kernel.)
      * 
      * @param context The context to read the SharedPreferences from
      */
     public static void restore(Context context) {
+        int iValue, iValue2;
         if (!isSupported()) {
             return;
         }
-        
-        int iValue;
+
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
-        Boolean bFirstTime = sharedPrefs.getBoolean("FirstTimeColor", true);
         for (String filePath : FILE_PATH) {
             String sDefaultValue = Utils.readOneLine(filePath);
-            iValue = sharedPrefs.getInt(filePath, Integer.valueOf(sDefaultValue));
-            if (bFirstTime){
-                Utils.writeColor(filePath, MAX_VALUE);
-                Log.d(TAG, "restore default value: " +MAX_VALUE+ " File: " + filePath);
+            Log.d(TAG,"INIT: " + sDefaultValue);
+            try {
+                iValue2 = Integer.parseInt(sDefaultValue);
+            } catch (NumberFormatException e) {
+                iValue2 = MAX_VALUE;
             }
-            else{
-                Utils.writeColor(filePath, iValue);
+            try {
+                iValue = sharedPrefs.getInt(filePath, iValue2);
                 Log.d(TAG, "restore: iValue: " + iValue + " File: " + filePath);
+            } catch (NumberFormatException e) {
+                iValue = iValue2;
+                Log.e(TAG, "restore ERROR: iValue: " + iValue + " File: " + filePath);
             }
-        }
-        if (bFirstTime)
-        {
-            SharedPreferences.Editor editor = sharedPrefs.edit();
-            editor.putBoolean("FirstTimeColor", false);
-            editor.commit();
+            Utils.writeColor(filePath, (int) iValue);
         }
     }
 
@@ -222,7 +220,7 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
         }
 
         private void updateValue(int progress) {
-            mValueDisplay.setText(String.format("%d", (int) progress / 5000000));
+            mValueDisplay.setText(String.format("%.10f", (double) progress / MAX_VALUE));
         }
 
         public void SetNewValue(int iValue) {
@@ -234,33 +232,33 @@ public class ColorTuningPreference extends DialogPreference implements OnClickLi
 
     public void onClick(View v) {
         switch(v.getId()){
-            case R.id.btnColor1:
-                    SetSettings1();
+            case R.id.btnColorDefault:
+                    SetDefaultSettings();
                     break;
-            case R.id.btnColor2:
-                    SetSettings2();
+            case R.id.btnColorCM:
+                    SetCMSettings();
                     break;
-            case R.id.btnColor3:
-                    SetSettings3();
+            case R.id.btnColorDark:
+                    SetDarkSettings();
                     break;
         }
     }
 
-    private void SetSettings1() {
-        mSeekBars[0].SetNewValue(1000000000);
-        mSeekBars[1].SetNewValue(1000000000);
-        mSeekBars[2].SetNewValue(1000000000);
+    private void SetCMSettings() {
+        mSeekBars[0].SetNewValue(1766478464);
+        mSeekBars[1].SetNewValue(1766478464);
+        mSeekBars[2].SetNewValue(1766478464);
     }
 
-    private void SetSettings2() {
-        mSeekBars[0].SetNewValue(1750000000);
-        mSeekBars[1].SetNewValue(1750000000);
-        mSeekBars[2].SetNewValue(1750000000);
+    private void SetDarkSettings() {
+        mSeekBars[0].SetNewValue(877466432);
+        mSeekBars[1].SetNewValue(877466432);
+        mSeekBars[2].SetNewValue(877466432);
     }
 
-    private void SetSettings3() {
-        mSeekBars[0].SetNewValue(900000000);
-        mSeekBars[1].SetNewValue(960000000);
-        mSeekBars[2].SetNewValue(1000000000);
+    private void SetDefaultSettings() {
+        mSeekBars[0].SetNewValue(MAX_VALUE);
+        mSeekBars[1].SetNewValue(MAX_VALUE);
+        mSeekBars[2].SetNewValue(MAX_VALUE);
     }
 }

@@ -59,11 +59,6 @@ PRODUCT_PACKAGES += \
 #PRODUCT_PACKAGES += \
 #	keystore.tuna
 
-
-# Kernel prebuilts
-PRODUCT_COPY_FILES += \
-	device/samsung/tuna/prebuilt/kernel:kernel
-
 PRODUCT_COPY_FILES += \
 	device/samsung/tuna/init.tuna.rc:root/init.tuna.rc \
 	device/samsung/tuna/init.tuna.usb.rc:root/init.tuna.usb.rc \
@@ -82,8 +77,7 @@ PRODUCT_COPY_FILES += \
 	device/samsung/tuna/bcmdhd.cal:system/etc/wifi/bcmdhd.cal
 
 PRODUCT_PROPERTY_OVERRIDES := \
-	wifi.interface=wlan0 \
-        wifi.supplicant_scan_interval=300
+	wifi.interface=wlan0
 
 # Enable AAC 5.1 output
 PRODUCT_PROPERTY_OVERRIDES += \
@@ -110,7 +104,7 @@ PRODUCT_PROPERTY_OVERRIDES += \
 
 # Gnexus Parts
 PRODUCT_PACKAGES += \
-    GNexusParts
+		GNexusParts \
 
 # Live Wallpapers
 PRODUCT_PACKAGES += \

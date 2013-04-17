@@ -30,8 +30,8 @@ import android.widget.Button;
 import android.util.Log;
 
 /**
- * Special preference type that allows configuration of Gamma settings on Nexus
- * Devices
+ * Special preference type that allows configuration of both the ring volume and
+ * notification volume.
  */
 public class GammaTuningPreference extends DialogPreference implements OnClickListener {
 
@@ -91,12 +91,12 @@ public class GammaTuningPreference extends DialogPreference implements OnClickLi
     }
 
     private void SetupButtonClickListeners(View view) {
-            Button mButton1 = (Button)view.findViewById(R.id.btnGamma1);
-            Button mButton2 = (Button)view.findViewById(R.id.btnGamma2);
-            Button mButton3 = (Button)view.findViewById(R.id.btnGamma3);
-            mButton1.setOnClickListener(this);
-            mButton2.setOnClickListener(this);
-            mButton3.setOnClickListener(this);
+            Button mDefaultButton = (Button)view.findViewById(R.id.btnGammaDefault);
+            Button mCMButton = (Button)view.findViewById(R.id.btnGammaCM);
+            Button mBrightButton = (Button)view.findViewById(R.id.btnGammaBright);
+            mDefaultButton.setOnClickListener(this);
+            mCMButton.setOnClickListener(this);
+            mBrightButton.setOnClickListener(this);
     }
 
     @Override
@@ -117,7 +117,7 @@ public class GammaTuningPreference extends DialogPreference implements OnClickLi
     }
 
     /**
-     * Restore screen gamma tuning from SharedPreferences. (Write to kernel.)
+     * Restore screen color tuning from SharedPreferences. (Write to kernel.)
      * 
      * @param context The context to read the SharedPreferences from
      */
@@ -126,21 +126,16 @@ public class GammaTuningPreference extends DialogPreference implements OnClickLi
             return;
         }
 
-        int iValue;
         SharedPreferences sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
 
         Boolean bFirstTime = sharedPrefs.getBoolean("FirstTimeGamma", true);
         for (String filePath : FILE_PATH) {
             String sDefaultValue = Utils.readOneLine(filePath);
-            iValue = sharedPrefs.getInt(filePath, Integer.valueOf(sDefaultValue));
-            if (bFirstTime){
+            int iValue = sharedPrefs.getInt(filePath, Integer.valueOf(sDefaultValue));
+            if (bFirstTime)
                 Utils.writeValue(filePath, "0");
-                Log.d(TAG, "restore default value: 0 File: " + filePath);
-            }
-            else{
+            else
                 Utils.writeValue(filePath, String.valueOf((long) iValue));
-                Log.d(TAG, "restore: iValue: " + iValue + " File: " + filePath);
-            }
         }
         if (bFirstTime)
         {
@@ -188,6 +183,8 @@ public class GammaTuningPreference extends DialogPreference implements OnClickLi
             mFilePath = filePath;
             iOffset = offsetValue;
             iMax = maxValue;
+
+            SharedPreferences sharedPreferences = getSharedPreferences();
 
             // Read original value
             if (Utils.fileExists(mFilePath)) {
@@ -253,36 +250,37 @@ public class GammaTuningPreference extends DialogPreference implements OnClickLi
 
     public void onClick(View v) {
         switch(v.getId()){
-            case R.id.btnGamma1:
-                    SetSettings1();
+            case R.id.btnGammaDefault:
+                    SetDefaultSettings();
                     break;
-            case R.id.btnGamma2:
-                    SetSettings2();
+            case R.id.btnGammaCM:
+                    SetCMSettings();
                     break;
-            case R.id.btnGamma3:
-                    SetSettings3();
+            case R.id.btnGammaBright:
+                    SetSBrightSettings();
                     break;
         }
     }
 
-    private void SetSettings1() {
-        mSeekBars[0].SetNewValue(0);
-        mSeekBars[1].SetNewValue(0);
-        mSeekBars[2].SetNewValue(0);
-        mSeekBars[3].SetNewValue(0);
-    }
-
-    private void SetSettings2() {
+    private void SetCMSettings() {
         mSeekBars[0].SetNewValue(2);
         mSeekBars[1].SetNewValue(15);
         mSeekBars[2].SetNewValue(5);
         mSeekBars[3].SetNewValue(8);
     }
 
-    private void SetSettings3() {
-        mSeekBars[0].SetNewValue(-4);
+    private void SetSBrightSettings() {
+        mSeekBars[0].SetNewValue(6);
+        mSeekBars[1].SetNewValue(25);
+        mSeekBars[2].SetNewValue(7);
+        mSeekBars[3].SetNewValue(4);
+    }
+
+    private void SetDefaultSettings() {
+        mSeekBars[0].SetNewValue(0);
         mSeekBars[1].SetNewValue(0);
-        mSeekBars[2].SetNewValue(5);
+        mSeekBars[2].SetNewValue(0);
         mSeekBars[3].SetNewValue(0);
     }
+
 }
